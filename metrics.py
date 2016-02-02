@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.spatial.distance import pdist,squareform,euclidean
+import distances
 
 def silhouette(X, cIDX):
     """
@@ -129,5 +130,59 @@ def PC(X,cIDX):
 def CE(X,cIDX):
  M = MM(X,cIDX)
  return -(M*np.log(M)).sum()/float(X.shape[0])
+
+def sm(X,cIDX,dist='euclidean'):
+ Nclusters = cIDX.max()+1
+ Npoints=len(X)
  
+# Clusters
+ A = np.array([ X[np.where(cIDX == i)] for i in range(Nclusters)])
+# Centroids
+ v = np.array([ np.sum(Ai,axis = 0)/float(Ai.shape[0])  for Ai in A]) 
+ dv = squareform(pdist(v, metric = dist)) 
+
+ aux1 = []
+ for i in range(Nclusters):
+  aux1.append((dv[i,dv[i].argsort()[1]])**2)
+
+ M=MM(X,cIDX)
+ 
+ z = np.ndarray(shape = (Nclusters,Npoints),dtype = float)
+ for i in range(Nclusters):
+  for j in range(Npoints):
+   z[i,j] = (euclidean(X[j],v[i])**2)*(M[i,j]**2)
+ return(z.sum()/(Npoints*np.array(aux1).min()))
+ 
+def ch(X,cIDX,dist='euclidean'):
+ Nclusters = cIDX.max()+1
+ Npoints=len(X)
+
+ n = np.ndarray(shape = (Nclusters),dtype = float)
+
+ j=0
+ for i in range(cIDX.min(),cIDX.max()+1):
+  aux=np.asarray([float(b) for b in (cIDX==i)])  
+  n[j]=aux.sum()
+  j=j+1
+
+# Clusters
+ A = np.array([ X[np.where(cIDX == i)] for i in range(Nclusters)])
+# Centroids
+ v = np.array([ np.sum(Ai,axis = 0)/float(Ai.shape[0])  for Ai in A])
+
+ ssb=0
+
+ for i in range(Nclusters):
+  ssb=n[i]*(euclidean(v[i],np.mean(X,axis=0))**2)+ssb
+
+ z = np.ndarray(shape = (Nclusters),dtype = float)
+
+ for i in range(cIDX.min(),cIDX.max()+1):
+  aux=np.array([(euclidean(x,v[i])**2) for x in X[cIDX==i]])
+  z[i]=aux.sum()
+   
+ ssw=z.sum()
+
+ return((ssb/(Nclusters-1))/(ssw/(Npoints-Nclusters))) 
+
     
