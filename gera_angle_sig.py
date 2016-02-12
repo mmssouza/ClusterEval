@@ -23,4 +23,4 @@ for im_file in cl.keys():
    tmp_h = tmp_h.astype(float)/tmp_h.sum()
    db[im_file] = scipy.hstack((cl[im_file],tmp_h))
    print im_file,tmp_h
-cPickle.dump(db,open(sys.argv[2],"w"))
+cPickle.dump(db,open(sys.argv[2],"wb"))
