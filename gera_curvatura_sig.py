@@ -7,8 +7,8 @@ import descritores as desc
 import numpy as np
 
 diretorio = sys.argv[1]
-sigma = 32.
-bins = 35
+sigma = 24.
+bins = 150
 range = (-1.,1.)
 f = open(diretorio+"classes.txt","r")
 cl = cPickle.load(f)

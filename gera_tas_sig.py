@@ -7,7 +7,7 @@ import descritores
 import numpy as np
 
 diretorio = sys.argv[1]
-bins = 15
+bins = 150
 range = (-1.,1.)
 
 f = open(diretorio+"classes.txt","r")

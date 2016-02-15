@@ -8,8 +8,8 @@ import numpy as np
 
 diretorio = sys.argv[1]
 raio = 15
-bins = 35
-range = (0.15,3.1)
+bins = 250
+range = (0.05,3.1)
 f = open(diretorio+"classes.txt","r")
 cl = cPickle.load(f)
 f.close()

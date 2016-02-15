@@ -74,7 +74,7 @@ def db(X,cIDX,q = 1,t = 2,distance = 'euclidean'):
  
  s = []
  for Ai,vi in zip(A,v):
-  s.append((np.array([euclidean(x,vi)**float(q)  for x in Ai]).sum()/float(Ai.shape[0]))**(1/float(q))) 
+  s.append((np.array([cdist([x],[vi],metric=distance)[0][0]**float(q)  for x in Ai]).sum()/float(Ai.shape[0]))**(1/float(q))) 
  
  d = squareform(pdist(v,'minkowski',t))
  
