@@ -20,5 +20,6 @@ for im_file in cl.keys():
    tmp_h = np.histogram(tmp,bins = bins,range = range)[0]
    tmp_h = tmp_h.astype(float)/tmp_h.sum()
    db[im_file] = scipy.hstack((cl[im_file],tmp_h))
-   print im_file,tmp_h
+   if np.isnan(db[im_file]).any():
+    print im_file,tmp_h
 cPickle.dump(db,open(sys.argv[2],"wb"))
