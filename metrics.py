@@ -1,8 +1,8 @@
 import numpy as np
-from scipy.spatial.distance import pdist,squareform,euclidean
+from scipy.spatial.distance import cdist,pdist,squareform,euclidean
 import distances
 
-def silhouette(X, cIDX):
+def silhouette(X, cIDX,distance = 'euclidean'):
     """
     Computes the silhouette score for each instance of a clustered dataset,
     which is defined as:
@@ -22,7 +22,7 @@ def silhouette(X, cIDX):
     K = len(np.unique(cIDX))    # number of clusters
 
     # compute pairwise distance matrix
-    D = squareform(pdist(X))
+    D = squareform(pdist(X,metric=distance))
 
     # indices belonging to each cluster
     kIndices = [np.flatnonzero(cIDX==k) for k in range(K)]
@@ -40,14 +40,14 @@ def silhouette(X, cIDX):
 
     return s
 
-def delta(A,B,dist):
+def delta(A,B,distance):
   Na = A.shape[0]
   Nb = B.shape[0]
-  d = squareform(pdist(np.vstack((A,B)),metric = dist))
+  d = squareform(pdist(np.vstack((A,B)),metric = distance))
   return d[Na:Na+Nb,0:Na].min()
 
-def Delta(A,dist):
-   return pdist(A,metric=dist).max() 
+def Delta(A,distance):
+   return pdist(A,metric=distance).max() 
  
 # Dunn measure
 def di(X,cIDX,distance = 'euclidean'):
@@ -65,7 +65,8 @@ def di(X,cIDX,distance = 'euclidean'):
 
 # David-Bouldin's measure (db)
 
-def db(X,cIDX,q = 1,t = 2,distance = 'euclidean'):
+#def db(X,cIDX,q = 1,t = 2,distance = 'euclidean'):
+def db(X,cIDX,q = 1,distance = 'euclidean'):
  Nclusters = cIDX.max()+1
 # Clusters
  A = np.array([ X[np.where(cIDX == i)] for i in range(Nclusters)])
@@ -76,7 +77,8 @@ def db(X,cIDX,q = 1,t = 2,distance = 'euclidean'):
  for Ai,vi in zip(A,v):
   s.append((np.array([cdist([x],[vi],metric=distance)[0][0]**float(q)  for x in Ai]).sum()/float(Ai.shape[0]))**(1/float(q))) 
  
- d = squareform(pdist(v,'minkowski',t))
+ #d = squareform(pdist(v,'minkowski',t))
+ d = squareform(pdist(v,metric=distance))
  
  R = []
  for i in range(Nclusters):
@@ -87,17 +89,17 @@ def db(X,cIDX,q = 1,t = 2,distance = 'euclidean'):
 # CS index : ratio of the sum of within-cluster scatter to between cluster separation.
 # small CS => valid optimal partition
 
-def CS(X,cIDX,dist='euclidean'):
+def CS(X,cIDX,distance='euclidean'):
  Nclusters = cIDX.max()+1
 # Clusters
  A = np.array([ X[np.where(cIDX == i)] for i in range(Nclusters)])
 # Centroids
  v = np.array([ np.sum(Ai,axis = 0)/float(Ai.shape[0])  for Ai in A]) 
- dv = squareform(pdist(v, metric = dist)) 
+ dv = squareform(pdist(v, metric = distance)) 
  aux1 = []
  aux2 = []
  for i in range(Nclusters):
-  aux1.append(np.array([a.max() for a in pdist(A[i],metric = dist)]).sum()/float(A[i].shape[0]))
+  aux1.append(np.array([a.max() for a in pdist(A[i],metric = distance)]).sum()/float(A[i].shape[0]))
   aux2.append(dv[i,dv[i].argsort()[1]])
 
  return(np.array(aux1).sum()/np.array(aux2).sum())
@@ -105,7 +107,7 @@ def CS(X,cIDX,dist='euclidean'):
 # MM : Membership matrix
 # MM shape is Nclusters x Npoints
 # MM[i,j] is the membership degree of data point j to cluster i
-def MM(X,cIDX, m = 2):
+def MM(X,cIDX, m = 2, distance = 'euclidean'):
  Nclusters  = cIDX.max()+1
  Npoints = X.shape[0]
 
@@ -118,20 +120,19 @@ def MM(X,cIDX, m = 2):
 
  for i in range(Nclusters):
   for j in range(Npoints):
-    M[i,j] = 1/np.array([(euclidean(X[j],v[i])/euclidean(X[j],v[k]))**(2/(float(m)-1)) for k in range(Nclusters)]).sum() 
-
+    M[i,j] = 1/np.array([(cdist([X[j]],[v[i]],metric=distance)[0][0]/cdist([X[j]],[v[k]],metric=distance)[0][0])**(2/(float(m)-1)) for k in range(Nclusters)]).sum() 
  return M
 
 # PC : Partition coefficient : Measures the amount of overlap between clusters. PC = 1 for good partition
-def PC(X,cIDX):
+def PC(X, cIDX, distance='euclidean'):
   return (MM(X,cIDX)**2).sum()/float(X.shape[0])
 
 # CE: Classification entropy: good partition -> minimum entropy
-def CE(X,cIDX):
+def CE(X, cIDX, distance = 'euclidean'):
  M = MM(X,cIDX)
  return -(M*np.log(M)).sum()/float(X.shape[0])
 
-def sm(X,cIDX,dist='euclidean'):
+def sm(X,cIDX,distance='euclidean'):
  Nclusters = cIDX.max()+1
  Npoints=len(X)
  
@@ -139,7 +140,7 @@ def sm(X,cIDX,dist='euclidean'):
  A = np.array([ X[np.where(cIDX == i)] for i in range(Nclusters)])
 # Centroids
  v = np.array([ np.sum(Ai,axis = 0)/float(Ai.shape[0])  for Ai in A]) 
- dv = squareform(pdist(v, metric = dist)) 
+ dv = squareform(pdist(v, metric = distance)) 
 
  aux1 = []
  for i in range(Nclusters):
@@ -150,10 +151,10 @@ def sm(X,cIDX,dist='euclidean'):
  z = np.ndarray(shape = (Nclusters,Npoints),dtype = float)
  for i in range(Nclusters):
   for j in range(Npoints):
-   z[i,j] = (euclidean(X[j],v[i])**2)*(M[i,j]**2)
+   z[i,j] = (cdist([X[j]],[v[i]],metric=distance)[0][0]**2)*(M[i,j]**2)
  return(z.sum()/(Npoints*np.array(aux1).min()))
  
-def ch(X,cIDX,dist='euclidean'):
+def ch(X, cIDX, distance='euclidean'):
  Nclusters = cIDX.max()+1
  Npoints=len(X)
 
@@ -173,12 +174,13 @@ def ch(X,cIDX,dist='euclidean'):
  ssb=0
 
  for i in range(Nclusters):
-  ssb=n[i]*(euclidean(v[i],np.mean(X,axis=0))**2)+ssb
+  ssb=n[i]*(cdist([v[i]],[np.mean(X,axis=0)],metric=distance)[0][0]**2)+ssb
+  
 
  z = np.ndarray(shape = (Nclusters),dtype = float)
 
  for i in range(cIDX.min(),cIDX.max()+1):
-  aux=np.array([(euclidean(x,v[i])**2) for x in X[cIDX==i]])
+  aux=np.array([(cdist([x],[v[i]],metric=distance)[0][0]**2) for x in X[cIDX==i]])
   z[i]=aux.sum()
    
  ssw=z.sum()
